@@ -52,7 +52,7 @@ module "gke" {
   source                 = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
   version                = "24.1.0"
   project_id             = var.project_id
-  name                   = "GKE-hello-world-cluster"
+  name                   = "gke-hello-world-cluster"
   regional               = true
   region                 = var.gcp_region
   network                = module.gcp-network.network_name
