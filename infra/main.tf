@@ -1,50 +1,73 @@
-# main.tf
-
-resource "google_compute_network" "default" {
-  name = "example-network"
-
-  auto_create_subnetworks  = false
-  enable_ula_internal_ipv6 = true
+module "gke_auth" {
+  source = "terraform-google-modules/kubernetes-engine/google//modules/auth"
+  version = "24.1.0"
+  depends_on   = [module.gke]
+  project_id   = var.project_id
+  location     = module.gke.location
+  cluster_name = module.gke.name
 }
 
-resource "google_compute_subnetwork" "default" {
-  name = "example-subnetwork"
+resource "local_file" "kubeconfig" {
+  content  = module.gke_auth.kubeconfig_raw
+  filename = "kubeconfig-gke"
+}
 
-  ip_cidr_range = "10.0.0.0/16"
-  region        = "us-central1"
+module "gcp-network" {
+  source       = "terraform-google-modules/network/google"
+  version      = "6.0.0"
+  project_id   = var.project_id
+  network_name = var.network_id
 
-  stack_type       = "IPV4_IPV6"
-  ipv6_access_type = "INTERNAL" # Change to "EXTERNAL" if creating an external loadbalancer
+  subnets = [
+    {
+      subnet_name   = var.subnetwork_id
+      subnet_ip     = "10.10.0.0/16"
+      subnet_region = var.gcp_region
+    },
+  ]
 
-  network = google_compute_network.default.id
-  secondary_ip_range {
-    range_name    = "services-range"
-    ip_cidr_range = "192.168.0.0/24"
-  }
-
-  secondary_ip_range {
-    range_name    = "pod-ranges"
-    ip_cidr_range = "192.168.1.0/24"
+  secondary_ranges = {
+    "${var.subnetwork}" = [
+      {
+        range_name    = var.ip_range_pods_name
+        ip_cidr_range = "10.20.0.0/16"
+      },
+      {
+        range_name    = var.ip_range_services_name
+        ip_cidr_range = "10.30.0.0/16"
+      },
+    ]
   }
 }
 
-resource "google_container_cluster" "default" {
-  name = "example-autopilot-cluster"
+data "google_client_config" "default" {}
 
-  location                 = "us-central1"
-  enable_autopilot         = true
-  enable_l4_ilb_subsetting = true
+provider "kubernetes" {
+  host                   = "https://${module.gke.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(module.gke.ca_certificate)
+}
 
-  network    = google_compute_network.default.id
-  subnetwork = google_compute_subnetwork.default.id
-
-  ip_allocation_policy {
-    stack_type                    = "IPV4_IPV6"
-    services_secondary_range_name = google_compute_subnetwork.default.secondary_ip_range[0].range_name
-    cluster_secondary_range_name  = google_compute_subnetwork.default.secondary_ip_range[1].range_name
-  }
-
-  # Set `deletion_protection` to `true` will ensure that one cannot
-  # accidentally delete this instance by use of Terraform.
-  deletion_protection = false
+module "gke" {
+  source                 = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
+  version                = "24.1.0"
+  project_id             = var.project_id
+  name                   = "GKE-hello-world-cluster"
+  regional               = true
+  region                 = var.gcp_region
+  network                = module.gcp-network.network_name
+  subnetwork             = module.gcp-network.subnets_names[0]
+  ip_range_pods          = var.ip_range_pods_name
+  ip_range_services      = var.ip_range_services_name
+  
+  node_pools = [
+    {
+      name                      = "node-pool"
+      machine_type              = "e2-medium"
+      node_locations            = "europe-west3-a,europe-west3-b,europe-west3-c"
+      min_count                 = 1
+      max_count                 = 2
+      disk_size_gb              = 30
+    },
+  ]
 }
