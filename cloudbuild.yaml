@@ -1,0 +1,39 @@
+# cloudbuild.yaml
+
+steps:
+  # Step 1: Set up Google Cloud SDK
+  - name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        echo "Setting up Google Cloud SDK and Terraform"
+        gcloud --quiet components update
+    dir: "infrastructure"
+
+  # Step 2: Terraform Init - Initialize the backend and provider plugins
+  - name: "hashicorp/terraform:latest"  # Or specify a specific version like "hashicorp/terraform:1.3.2"
+    id: "Terraform Init"
+    args: ["init", "-input=false"]
+    dir: "infrastructure"
+
+  # Step 3: Terraform Plan - Create an execution plan
+  - name: "hashicorp/terraform:latest"
+    id: "Terraform Plan"
+    args: ["plan", "-out=tfplan", "-input=false"]
+    env:
+      - "GOOGLE_PROJECT_ID=$PROJECT_ID"  # Environment variable for Google Cloud project ID
+    dir: "infrastructure"
+
+  # Step 4: Terraform Apply - Apply the changes
+  - name: "hashicorp/terraform:latest"
+    id: "Terraform Apply"
+    args: ["apply", "-input=false", "tfplan"]
+    dir: "infrastructure"
+
+# Specify any needed substitutions here, such as PROJECT_ID
+substitutions:
+  _PROJECT_ID: "rec-project-gcp "
+
+# Optional: Define a timeout (defaults to 10 minutes if not specified)
+timeout: "1200s"  # 20 minutes
