@@ -20,7 +20,7 @@ steps:
   # Step 3: Terraform Plan - Create an execution plan
   - name: "hashicorp/terraform:latest"
     id: "Terraform Plan"
-    args: ["plan", "-out=tfplan", "-input=false"]
+    args: ["plan", "-out=tfplan", "-input=false", "-destroy"]
     env:
       - "GOOGLE_PROJECT_ID=$PROJECT_ID"  # Environment variable for Google Cloud project ID
     dir: "infrastructure"
