@@ -9,13 +9,13 @@ steps:
       - |
         echo "Setting up Google Cloud SDK and Terraform"
         gcloud --quiet components update
-    dir: "infrastructure"
+    dir: "infra"
 
   # Step 2: Terraform Init - Initialize the backend and provider plugins
   - name: "hashicorp/terraform:latest"  # Or specify a specific version like "hashicorp/terraform:1.3.2"
     id: "Terraform Init"
     args: ["init", "-input=false"]
-    dir: "infrastructure"
+    dir: "infra"
 
   # Step 3: Terraform Plan - Create an execution plan
   - name: "hashicorp/terraform:latest"
@@ -23,13 +23,13 @@ steps:
     args: ["plan", "-out=tfplan", "-input=false", "-destroy"]
     env:
       - "GOOGLE_PROJECT_ID=$PROJECT_ID"  # Environment variable for Google Cloud project ID
-    dir: "infrastructure"
+    dir: "infra"
 
   # Step 4: Terraform Apply - Apply the changes
   - name: "hashicorp/terraform:latest"
     id: "Terraform Apply"
     args: ["apply", "-input=false", "tfplan"]
-    dir: "infrastructure"
+    dir: "infra"
 
 # Specify any needed substitutions here, such as PROJECT_ID
 substitutions:
