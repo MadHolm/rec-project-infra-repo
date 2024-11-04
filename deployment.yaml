@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app-deployment   # Name of the deployment
+  labels:
+    app: hello-app              # Label to identify the app
+spec:
+  replicas: 3                   # Number of pod replicas
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      containers:
+      - name: hello-app
+        image: us-docker.pkg.dev/cloudrun/container/hello   # Existing image from the Artifact Registry
+        ports:
+        - containerPort: 80      # Port the app listens on inside the container
+        resources:
+          limits:
+            memory: "512Mi"      # Memory limit for the container
+            cpu: "500m"          # CPU limit for the container
