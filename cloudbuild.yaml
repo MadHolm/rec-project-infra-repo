@@ -33,7 +33,12 @@ steps:
 
 # Specify any needed substitutions here, such as PROJECT_ID
 substitutions:
-  _PROJECT_ID: "rec-project-gcp "
+  _PROJECT_ID: "rec-project-gcp"
+
+# Implemented for this project purposes only. In actual real-life app/infra deploymeny it would be preferred
+# to have a logging bucket to store that data for later insight and/or debugging. 
+options:
+  logging: CLOUD_LOGGING_ONLY
 
 # Optional: Define a timeout (defaults to 10 minutes if not specified)
 timeout: "1200s"  # 20 minutes
