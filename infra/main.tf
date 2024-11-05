@@ -59,6 +59,7 @@ module "gke" {
   subnetwork             = module.gcp-network.subnets_names[0]
   ip_range_pods          = var.ip_range_pods_name
   ip_range_services      = var.ip_range_services_name
+  deletion_protection    = false # ONLY FOR TESTING PURPOSES ! ! !
   
   node_pools = [
     {
