@@ -12,3 +12,6 @@ The architecture consists of the following elements:
 - VPC Network (gke-network) - VPC network used by the GKE cluster. Separate VPC networks allows for full control over cluster's connectivity with firewall rules as well as limits its exposure to external web traffic increasing secuity.
 
 Deployed application is acccessible with the following link: https://boar.best 
+
+*NOTICE*
+Service account used for Cloud Build, triggers themselves, bucket to store Terraform state files as well as required Google APIs aren't created/activated by Terraform scripts here.
